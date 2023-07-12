@@ -1,24 +1,15 @@
-from django.http import JsonResponse
-from models import Product
+from django.http import JsonResponse, HttpResponse
+from django.contrib.auth.models import User
 
 
-def index(request):
-    data = [
-        {
-            "name": "John Doe",
-            "age": 30,
-            "profession": "Web Developer"
-        },
-        {
-            "name": "Jane Smith",
-            "age": 35,
-            "profession": "Graphic Designer"
-        },
-        {
-            "name": "Mike Johnson",
-            "age": 25,
-            "profession": "Software Engineer"
-        }
-    ]
+def handleSignup(request):
+    if request.method == 'POST':
+        user_data = request.POST
+        print(user_data)
 
-    return JsonResponse(data, safe=False)
+        user = User.objects.create_user(
+            username=user_data['username'], email=user_data['email'], password=user_data['password'])
+        user.save()
+        return JsonResponse({'message': 'User created successfully'})
+    else:
+        HttpResponse('404 Not Found')
