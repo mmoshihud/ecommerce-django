@@ -1,6 +1,10 @@
-from django.http import JsonResponse, HttpResponse
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
+from django.http import JsonResponse, HttpResponse
+import jwt
+import os
+from home.middleware import JwtMiddleware
+secret = os.getenv('ACCESS_TOKEN_SECRET')
 
 
 def handleSignup(request):
@@ -13,20 +17,23 @@ def handleSignup(request):
         user.save()
         return JsonResponse({'message': 'User created successfully'})
     else:
-        HttpResponse('404 Not Found')
+        return HttpResponse('404 Not Found', status=404)
 
 
 def handleLogin(request):
     if request.method == 'POST':
-        username = request.POST['username']
+        email = request.POST['email']
         password = request.POST['password']
 
     try:
-        user = User.objects.get(username=username)
+        user = User.objects.get(email=email)
         if user.check_password(password):
+            print(secret)
+            token = jwt.encode({email: email}, secret, algorithm="HS256")
             # Password is correct
             # Perform any additional actions if needed
-            return HttpResponse('User exists and password is correct!')
+            print(token)
+            return HttpResponse({token, 'User exists and password is correct!'})
         else:
             # Password is incorrect
             # Perform any additional actions if needed
@@ -35,3 +42,9 @@ def handleLogin(request):
         # User does not exist
         # Perform any additional actions if needed
         return HttpResponse('Invalid login credentials!')
+
+
+@JwtMiddleware
+def test(request):
+    data = {'message': 'JWT middleware working'}
+    return JsonResponse(data, safe=False)
